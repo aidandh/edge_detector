@@ -18,6 +18,11 @@ func main() {
 	}
 
 	paths := os.Args[1:]
+	if len(paths) == 0 {
+		fmt.Println("Too few arguments")
+		return
+	}
+
 	files := openFiles(paths)
 	for _, file := range files {
 		defer file.Close()
