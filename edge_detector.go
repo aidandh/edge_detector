@@ -9,7 +9,6 @@ import (
 	"image/png"
 	"os"
 	"strings"
-	"time"
 )
 
 type ImageWithName struct {
@@ -76,9 +75,9 @@ func openImages(paths []string) []ImageWithName {
 func applyLaplacianFilter(original image.Image) image.Image {
 	filter :=
 		[][]int{
-			{-1, 0, -1},
-			{0, 4, 0},
-			{-1, 0, -1},
+			{-1, -1, -1},
+			{-1, 8, -1},
+			{-1, -1, -1},
 		}
 	filterHeight := len(filter)
 	filterWidth := len(filter[0])
@@ -92,9 +91,8 @@ func applyLaplacianFilter(original image.Image) image.Image {
 			_, _, _, la := original.At(x, y).RGBA()
 			for iHeight := 0; iHeight < filterHeight; iHeight++ {
 				for iWidth := 0; iWidth < filterWidth; iWidth++ {
-					xCoord := (iWidth - filterWidth/2 + iWidth + imageWidth) % imageWidth
-					yCoord := (iHeight - filterHeight/2 + iHeight + imageHeight) % imageHeight
-					// fmt.Println(iWidth, iHeight)
+					xCoord := (x - filterWidth/2 + iWidth + imageWidth) % imageWidth
+					yCoord := (y - filterHeight/2 + iHeight + imageHeight) % imageHeight
 					or, og, ob, _ := original.At(xCoord, yCoord).RGBA()
 					lr += int(or) * filter[iHeight][iWidth]
 					lg += int(og) * filter[iHeight][iWidth]
@@ -110,13 +108,6 @@ func applyLaplacianFilter(original image.Image) image.Image {
 				uint16(lb),
 				uint16(la),
 			})
-			// r, g, b, a := original.At(x, y).RGBA()
-			// fmt.Println(x, y)
-			// fmt.Println(r, g, b, a)
-			// fmt.Println(uint16(lr), uint16(lg), uint16(lb), uint16(la))
-			// fmt.Println("---------------------------")
-			// time.Sleep(500)
-			time.Sleep(0)
 		}
 	}
 
