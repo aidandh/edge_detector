@@ -9,6 +9,7 @@ import (
 	"image/png"
 	"os"
 	"strings"
+	"time"
 )
 
 type ImageWithName struct {
@@ -73,12 +74,48 @@ func openImages(paths []string) []ImageWithName {
 }
 
 func applyLaplacianFilter(original image.Image) image.Image {
-	laplacian := image.NewRGBA(original.Bounds())
+	filter :=
+		[][]int{
+			{-1, -1, -1},
+			{-1, 8, -1},
+			{-1, -1, -1},
+		}
+	filterHeight := len(filter)
+	filterWidth := len(filter[0])
+	imageWidth := original.Bounds().Max.X
+	imageHeight := original.Bounds().Max.Y
+	laplacian := image.NewRGBA64(original.Bounds())
 
-	for x := range laplacian.Bounds().Max.X - 1 {
-		for y := range laplacian.Bounds().Max.Y - 1 {
-			r, g, b, a := original.At(x, y).RGBA()
-			laplacian.Set(x, y, color.RGBA64{uint16(r), uint16(g), uint16(b), uint16(a)})
+	for x := range imageWidth - 1 {
+		for y := range imageHeight - 1 {
+			lr, lg, lb := 0, 0, 0
+			_, _, _, la := original.At(x, y).RGBA()
+			for iHeight := range filterHeight - 1 {
+				for iWidth := range filterWidth - 1 {
+					xCoord := (iWidth - filterWidth/2 + iWidth + imageWidth) % imageWidth
+					yCoord := (iHeight - filterHeight/2 + iHeight + imageHeight) % imageHeight
+					or, og, ob, _ := original.At(xCoord, yCoord).RGBA()
+					lr += int(or) * filter[iHeight][iWidth]
+					lg += int(og) * filter[iHeight][iWidth]
+					lb += int(ob) * filter[iHeight][iWidth]
+					// fmt.Println("lr:", lr, "or:", or, "filter[iHeight][iWidth]:", filter[iHeight][iWidth])
+					// fmt.Println("lg:", lg, "og:", og, "filter[iHeight][iWidth]:", filter[iHeight][iWidth])
+					// fmt.Println("lb:", lb, "ob:", ob, "filter[iHeight][iWidth]:", filter[iHeight][iWidth])
+				}
+			}
+			laplacian.Set(x, y, color.RGBA64{
+				uint16(lr),
+				uint16(lg),
+				uint16(lb),
+				uint16(la),
+			})
+			// r, g, b, a := original.At(x, y).RGBA()
+			// fmt.Println(x, y)
+			// fmt.Println(r, g, b, a)
+			// fmt.Println(uint16(lr), uint16(lg), uint16(lb), uint16(la))
+			// fmt.Println("---------------------------")
+			// time.Sleep(500)
+			time.Sleep(0)
 		}
 	}
 
