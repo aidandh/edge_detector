@@ -76,9 +76,9 @@ func openImages(paths []string) []ImageWithName {
 func applyLaplacianFilter(original image.Image) image.Image {
 	filter :=
 		[][]int{
-			{-1, -1, -1},
-			{-1, 8, -1},
-			{-1, -1, -1},
+			{-1, 0, -1},
+			{0, 4, 0},
+			{-1, 0, -1},
 		}
 	filterHeight := len(filter)
 	filterWidth := len(filter[0])
@@ -86,14 +86,15 @@ func applyLaplacianFilter(original image.Image) image.Image {
 	imageHeight := original.Bounds().Max.Y
 	laplacian := image.NewRGBA64(original.Bounds())
 
-	for x := range imageWidth - 1 {
-		for y := range imageHeight - 1 {
+	for x := 0; x < imageWidth; x++ {
+		for y := 0; y < imageHeight; y++ {
 			lr, lg, lb := 0, 0, 0
 			_, _, _, la := original.At(x, y).RGBA()
-			for iHeight := range filterHeight - 1 {
-				for iWidth := range filterWidth - 1 {
+			for iHeight := 0; iHeight < filterHeight; iHeight++ {
+				for iWidth := 0; iWidth < filterWidth; iWidth++ {
 					xCoord := (iWidth - filterWidth/2 + iWidth + imageWidth) % imageWidth
 					yCoord := (iHeight - filterHeight/2 + iHeight + imageHeight) % imageHeight
+					// fmt.Println(iWidth, iHeight)
 					or, og, ob, _ := original.At(xCoord, yCoord).RGBA()
 					lr += int(or) * filter[iHeight][iWidth]
 					lg += int(og) * filter[iHeight][iWidth]
