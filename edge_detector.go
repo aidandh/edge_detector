@@ -31,6 +31,7 @@ func main() {
 
 	images := openImages(paths)
 	for _, image := range images {
+		fmt.Printf("Formatting %s...\n", image.Name)
 		laplacianImage := applyLaplacianFilter(image.Image)
 
 		outputFile, err := os.Create("output/" + image.Name + ".png")
@@ -97,9 +98,6 @@ func applyLaplacianFilter(original image.Image) image.Image {
 					lr += int(or) * filter[iHeight][iWidth]
 					lg += int(og) * filter[iHeight][iWidth]
 					lb += int(ob) * filter[iHeight][iWidth]
-					// fmt.Println("lr:", lr, "or:", or, "filter[iHeight][iWidth]:", filter[iHeight][iWidth])
-					// fmt.Println("lg:", lg, "og:", og, "filter[iHeight][iWidth]:", filter[iHeight][iWidth])
-					// fmt.Println("lb:", lb, "ob:", ob, "filter[iHeight][iWidth]:", filter[iHeight][iWidth])
 				}
 			}
 			laplacian.Set(x, y, color.RGBA64{
