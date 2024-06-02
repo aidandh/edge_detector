@@ -50,9 +50,9 @@ func main() {
 			fmt.Println(err.Error())
 			continue
 		}
-		defer outputFile.Close()
 		laplacianImage := <-c
 		png.Encode(outputFile, laplacianImage)
+		outputFile.Close()
 	}
 
 	duration := time.Since(startTime)
