@@ -13,8 +13,8 @@ import (
 )
 
 type ImageWithName struct {
-	Image image.Image
-	Name  string
+	Data image.Image
+	Name string
 }
 
 func main() {
@@ -32,18 +32,25 @@ func main() {
 	}
 
 	images := openImages(paths)
-	for _, image := range images {
-		fmt.Printf("Formatting %s...\n", image.Name)
-		laplacianImage := applyLaplacianFilter(image.Image)
+	chans := make([]chan image.Image, 0, len(images))
 
-		outputFile, err := os.Create("output/" + image.Name + ".png")
+	for _, curImage := range images {
+		c := make(chan image.Image)
+		chans = append(chans, c)
+		go applyLaplacianFilter(curImage.Data, c)
+	}
+
+	for i, c := range chans {
+		outputFile, err := os.Create("output/" + images[i].Name + ".png")
 		if err != nil && !os.IsExist(err) {
 			fmt.Println(err.Error())
 			continue
 		}
 		defer outputFile.Close()
+		laplacianImage := <-c
 		png.Encode(outputFile, laplacianImage)
 	}
+
 	duration := time.Since(startTime)
 	fmt.Println("Execution time:", duration)
 }
@@ -56,7 +63,6 @@ func openImages(paths []string) []ImageWithName {
 			fmt.Println(err.Error())
 			continue
 		}
-		defer file.Close()
 
 		image, _, err := image.Decode(file)
 		if err != nil {
@@ -73,11 +79,14 @@ func openImages(paths []string) []ImageWithName {
 		imageName := strings.Split(splitStr[len(splitStr)-1], ".")[0]
 
 		images = append(images, ImageWithName{image, imageName})
+
+		file.Close()
 	}
 	return images
 }
 
-func applyLaplacianFilter(original image.Image) image.Image {
+func applyLaplacianFilter(original image.Image, c chan image.Image) {
+	defer close(c)
 	filter :=
 		[][]int{
 			{-1, -1, -1},
@@ -113,7 +122,7 @@ func applyLaplacianFilter(original image.Image) image.Image {
 		}
 	}
 
-	return laplacian
+	c <- laplacian
 }
 
 func clamp(value int) int {
