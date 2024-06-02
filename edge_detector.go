@@ -37,7 +37,11 @@ func main() {
 	for _, curImage := range images {
 		c := make(chan image.Image)
 		chans = append(chans, c)
-		go applyLaplacianFilter(curImage.Data, c)
+		cur := curImage
+		go func() {
+			c <- applyLaplacianFilter(cur.Data)
+			close(c)
+		}()
 	}
 
 	for i, c := range chans {
@@ -85,8 +89,7 @@ func openImages(paths []string) []ImageWithName {
 	return images
 }
 
-func applyLaplacianFilter(original image.Image, c chan image.Image) {
-	defer close(c)
+func applyLaplacianFilter(original image.Image) image.Image {
 	filter :=
 		[][]int{
 			{-1, -1, -1},
@@ -122,7 +125,7 @@ func applyLaplacianFilter(original image.Image, c chan image.Image) {
 		}
 	}
 
-	c <- laplacian
+	return laplacian
 }
 
 func clamp(value int) int {
