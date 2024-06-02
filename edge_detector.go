@@ -9,6 +9,7 @@ import (
 	"image/png"
 	"os"
 	"strings"
+	"time"
 )
 
 type ImageWithName struct {
@@ -17,6 +18,7 @@ type ImageWithName struct {
 }
 
 func main() {
+	startTime := time.Now()
 	err := os.Mkdir("output", 0750)
 	if err != nil && !os.IsExist(err) {
 		fmt.Println(err.Error())
@@ -42,6 +44,8 @@ func main() {
 		defer outputFile.Close()
 		png.Encode(outputFile, laplacianImage)
 	}
+	duration := time.Since(startTime)
+	fmt.Println("Execution time:", duration)
 }
 
 func openImages(paths []string) []ImageWithName {
