@@ -91,15 +91,13 @@ func applyLaplacianFilter(original image.Image) image.Image {
 			lr, lg, lb := 0, 0, 0
 			_, _, _, la := original.At(x, y).RGBA()
 			for iHeight := 0; iHeight < filterHeight; iHeight++ {
-				if xCoord := x - filterWidth/2 + iHeight; xCoord >= 0 && xCoord < imageWidth {
-					for iWidth := 0; iWidth < filterWidth; iWidth++ {
-						if yCoord := y - filterHeight/2 + iWidth; yCoord >= 0 && yCoord < imageHeight {
-							or, og, ob, _ := original.At(xCoord, yCoord).RGBA()
-							lr += int(or/256) * filter[iHeight][iWidth]
-							lg += int(og/256) * filter[iHeight][iWidth]
-							lb += int(ob/256) * filter[iHeight][iWidth]
-						}
-					}
+				for iWidth := 0; iWidth < filterWidth; iWidth++ {
+					xCoord := (x - filterWidth/2 + iWidth + imageWidth) % imageWidth
+					yCoord := (y - filterHeight/2 + iHeight + imageHeight) % imageHeight
+					or, og, ob, _ := original.At(xCoord, yCoord).RGBA()
+					lr += int(or/256) * filter[iHeight][iWidth]
+					lg += int(og/256) * filter[iHeight][iWidth]
+					lb += int(ob/256) * filter[iHeight][iWidth]
 				}
 			}
 			laplacian.Set(x, y, color.RGBA{
