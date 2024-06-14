@@ -9,7 +9,6 @@ import (
 	"image/png"
 	"os"
 	"strings"
-	"time"
 )
 
 type ImageWithName struct {
@@ -18,7 +17,6 @@ type ImageWithName struct {
 }
 
 func main() {
-	startTime := time.Now()
 	err := os.Mkdir("output", 0750)
 	if err != nil && !os.IsExist(err) {
 		fmt.Println(err.Error())
@@ -31,9 +29,11 @@ func main() {
 		return
 	}
 
+	fmt.Println("Opening images...")
 	images := openImages(paths)
 	chans := make([]chan image.Image, 0, len(images))
 
+	fmt.Println("Processing images...")
 	for _, curImage := range images {
 		c := make(chan image.Image)
 		chans = append(chans, c)
@@ -53,10 +53,8 @@ func main() {
 		laplacianImage := <-c
 		png.Encode(outputFile, laplacianImage)
 		outputFile.Close()
+		fmt.Println("Saved", images[i].Name)
 	}
-
-	duration := time.Since(startTime)
-	fmt.Println("Execution time:", duration)
 }
 
 func openImages(paths []string) []ImageWithName {
