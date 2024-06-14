@@ -106,6 +106,9 @@ func applyLaplacianFilter(original image.Image) image.Image {
 		wg.Add(1)
 		start := imageHeight / threads * i
 		end := start + imageHeight/threads
+		if i == threads-1 {
+			end += imageHeight % threads
+		}
 		go func(start, end int) {
 			defer wg.Done()
 			for y := start; y < end; y++ {
