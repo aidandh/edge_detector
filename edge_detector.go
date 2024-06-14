@@ -9,6 +9,7 @@ import (
 	"image/png"
 	"os"
 	"strings"
+	"sync"
 )
 
 type ImageWithName struct {
@@ -31,30 +32,29 @@ func main() {
 
 	fmt.Println("Opening images...")
 	images := openImages(paths)
-	chans := make([]chan image.Image, 0, len(images))
 
 	fmt.Println("Processing images...")
+	var wg sync.WaitGroup
 	for _, curImage := range images {
-		c := make(chan image.Image)
-		chans = append(chans, c)
-		cur := curImage
-		go func() {
-			c <- applyLaplacianFilter(cur.Data)
-			close(c)
-		}()
+		wg.Add(1)
+		go func(cur ImageWithName) {
+			defer wg.Done()
+			laplacianImage := applyLaplacianFilter(cur.Data)
+			outputFile, err := os.Create("output/" + cur.Name + ".png")
+			if err != nil && !os.IsExist(err) {
+				fmt.Println(err.Error())
+				return
+			}
+			defer outputFile.Close()
+			if err := png.Encode(outputFile, laplacianImage); err != nil {
+				fmt.Println(err.Error())
+			} else {
+				fmt.Println("Saved", cur.Name)
+			}
+		}(curImage)
 	}
-
-	for i, c := range chans {
-		outputFile, err := os.Create("output/" + images[i].Name + ".png")
-		if err != nil && !os.IsExist(err) {
-			fmt.Println(err.Error())
-			continue
-		}
-		laplacianImage := <-c
-		png.Encode(outputFile, laplacianImage)
-		outputFile.Close()
-		fmt.Println("Saved", images[i].Name)
-	}
+	wg.Wait()
+	fmt.Println("Done.")
 }
 
 func openImages(paths []string) []ImageWithName {
