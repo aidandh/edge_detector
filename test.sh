@@ -28,5 +28,4 @@ do
 done
 
 # Run the edge_detector executable with the files as arguments
-go build
-time ./edge_detector "${file_array[@]}"
+time go run . "${file_array[@]}"
