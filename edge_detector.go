@@ -102,38 +102,45 @@ func applyLaplacianFilter(original image.Image) image.Image {
 	laplacian := image.NewRGBA(original.Bounds())
 
 	var wg sync.WaitGroup
-	for i := range threads {
-		wg.Add(1)
-		start := imageHeight / threads * i
-		end := start + imageHeight/threads
-		if i == threads-1 {
-			end += imageHeight % threads
-		}
-		go func(start, end int) {
-			defer wg.Done()
-			for y := start; y < end; y++ {
-				for x := 0; x < imageWidth; x++ {
-					lr, lg, lb := 0, 0, 0
-					_, _, _, la := original.At(x, y).RGBA()
-					for iHeight := 0; iHeight < filterHeight; iHeight++ {
-						for iWidth := 0; iWidth < filterWidth; iWidth++ {
-							xCoord := (x - filterWidth/2 + iWidth + imageWidth) % imageWidth
-							yCoord := (y - filterHeight/2 + iHeight + imageHeight) % imageHeight
-							or, og, ob, _ := original.At(xCoord, yCoord).RGBA()
-							lr += int(or/256) * filter[iHeight][iWidth]
-							lg += int(og/256) * filter[iHeight][iWidth]
-							lb += int(ob/256) * filter[iHeight][iWidth]
-						}
+	applyFilter := func(start, end int) {
+		defer wg.Done()
+		for y := start; y < end; y++ {
+			for x := 0; x < imageWidth; x++ {
+				lr, lg, lb := 0, 0, 0
+				_, _, _, la := original.At(x, y).RGBA()
+				for iHeight := 0; iHeight < filterHeight; iHeight++ {
+					for iWidth := 0; iWidth < filterWidth; iWidth++ {
+						xCoord := (x - filterWidth/2 + iWidth + imageWidth) % imageWidth
+						yCoord := (y - filterHeight/2 + iHeight + imageHeight) % imageHeight
+						or, og, ob, _ := original.At(xCoord, yCoord).RGBA()
+						lr += int(or/256) * filter[iHeight][iWidth]
+						lg += int(og/256) * filter[iHeight][iWidth]
+						lb += int(ob/256) * filter[iHeight][iWidth]
 					}
-					laplacian.Set(x, y, color.RGBA{
-						uint8(clamp(lr)),
-						uint8(clamp(lg)),
-						uint8(clamp(lb)),
-						uint8(la),
-					})
 				}
+				laplacian.Set(x, y, color.RGBA{
+					uint8(clamp(lr)),
+					uint8(clamp(lg)),
+					uint8(clamp(lb)),
+					uint8(la),
+				})
 			}
-		}(start, end)
+		}
+	}
+
+	if imageHeight < threads {
+		wg.Add(1)
+		go applyFilter(0, imageHeight)
+	} else {
+		for i := range threads {
+			start := imageHeight / threads * i
+			end := start + imageHeight/threads
+			if i == threads-1 {
+				end += imageHeight % threads
+			}
+			wg.Add(1)
+			go applyFilter(start, end)
+		}
 	}
 
 	wg.Wait()
